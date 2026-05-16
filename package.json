@@ -3,6 +3,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev --turbopack",
+    "lint": "eslint .",
     "start": "next start"
   },
   "dependencies": {
@@ -27,12 +28,15 @@
     "@types/node": "22.10.7",
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",
-    "baseline-browser-mapping": "^2.10.29"
+    "baseline-browser-mapping": "^2.10.29",
+    "eslint": "^10.4.0",
+    "eslint-config-next": "^16.2.6"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "bcrypt",
-      "sharp"
+      "sharp",
+      "unrs-resolver"
     ]
   },
   "packageManager": "pnpm@10.26.2+sha512.0e308ff2005fc7410366f154f625f6631ab2b16b1d2e70238444dd6ae9d630a8482d92a451144debc492416896ed16f7b114a86ec68b8404b2443869e68ffda6"
