@@ -180,8 +180,6 @@ export async function register(
     };
   }
 
-  console.log("The data is: ", validatedFields.data);
-
   const { email, name, password } = validatedFields.data;
 
   const salt = await bcrypt.genSalt(12);

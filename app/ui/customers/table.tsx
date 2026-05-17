@@ -5,12 +5,18 @@ import {
   CustomersTableType,
   FormattedCustomersTable,
 } from '@/app/lib/definitions';
+import { fetchCustomers, fetchFilteredCustomers } from "@/app/lib/data";
 
 export default async function CustomersTable({
-  customers,
+  query,
+  page,
 }: {
-  customers: FormattedCustomersTable[];
+  query: string;
+  page: number;
 }) {
+  //  customers: FormattedCustomersTable[];
+  const customers = await fetchFilteredCustomers(query);
+
   return (
     <div className="w-full">
       <h1 className={`${lusitana.className} mb-8 text-xl md:text-2xl`}>
@@ -62,6 +68,7 @@ export default async function CustomersTable({
                   </div>
                 ))}
               </div>
+
               <table className="hidden min-w-full rounded-md text-gray-900 md:table">
                 <thead className="rounded-md bg-gray-50 text-left text-sm font-normal">
                   <tr>
