@@ -3,6 +3,10 @@ import { z } from "zod";
 import postgres from "postgres";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { AuthError } from "next-auth";
+import { signIn } from "@/auth";
+import bcrypt from "bcrypt";
+import { randomUUID } from "crypto";
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require" });
 
@@ -16,6 +20,18 @@ const FormSchema = z.object({
     message: "Please select an invoice status.",
   }),
   date: z.string(),
+});
+
+const RegisterSchema = z.object({
+  name: z.string().min(3, {
+    message: "Fullname should be at least 3 characters long.",
+  }),
+  email: z.string().email({
+    message: "Please provide a valid email.",
+  }),
+  password: z.string().min(6, {
+    message: "Please password should be at least 6 characters long.",
+  }),
 });
 
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
@@ -118,4 +134,70 @@ export async function deleteInvoice(id: string) {
     };
   }
   revalidatePath("/dashboard/invoices");
+}
+
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn("credentials", formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case "CredentialsSignin":
+          return "Invalid credentials.";
+
+        default:
+          return "Something went wrong.";
+      }
+    }
+    throw error;
+  }
+}
+
+export async function register(
+  prevState: {
+    errors?: {
+      name?: string[] | undefined;
+      email?: string[] | undefined;
+      password?: string[] | undefined;
+    };
+    message: string;
+  },
+  formData: FormData,
+) {
+  const validatedFields = RegisterSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Registration failed.",
+    };
+  }
+
+  console.log("The data is: ", validatedFields.data);
+
+  const { email, name, password } = validatedFields.data;
+
+  const salt = await bcrypt.genSalt(12);
+  const hashedPassword = await bcrypt.hash(password, salt);
+  const id = randomUUID();
+
+  try {
+    await sql`INSERT INTO users (id, name, email, password)
+        VALUES (${id}, ${name}, ${email}, ${hashedPassword})
+        ON CONFLICT (id) DO NOTHING`;
+  } catch (error) {
+    console.log(error);
+    return {
+      message: "Error registering your account. Please try again later.",
+    };
+  }
+
+  redirect("/login");
 }
